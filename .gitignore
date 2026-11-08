@@ -147,3 +147,7 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# shopify-maintainer local memory (store data, screenshots, generated media)
+data/
+.env

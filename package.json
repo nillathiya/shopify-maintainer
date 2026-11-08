@@ -1,0 +1,31 @@
+{
+  "name": "shopify-maintainer",
+  "version": "0.1.0",
+  "description": "Open-source, self-hosted AI maintainer for an existing Shopify store: scans your theme, learns your brand, and proposes banners, sliders, festival campaigns and catalog updates that you approve before anything goes live.",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "start": "tsx --disable-warning=ExperimentalWarning src/index.ts",
+    "dev": "tsx watch --disable-warning=ExperimentalWarning src/index.ts",
+    "scan": "tsx --disable-warning=ExperimentalWarning src/cli.ts",
+    "test": "tsx --disable-warning=ExperimentalWarning --test test/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "setup:browser": "playwright install chromium"
+  },
+  "dependencies": {
+    "@hono/node-server": "^2.1.6",
+    "hono": "^4.13.17",
+    "node-html-parser": "^9.0.7",
+    "tsx": "^4.23.15"
+  },
+  "optionalDependencies": {
+    "playwright": "^1.65.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "typescript": "^7.0.2"
+  }
+}
