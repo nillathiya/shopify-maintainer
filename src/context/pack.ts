@@ -164,6 +164,31 @@ export function storeMarkdown(snap: StoreSnapshot, changes: Change[], scanId: st
     L.push("");
   }
 
+  if (snap.admin) {
+    const a = snap.admin;
+    const editableSections = snap.pages.flatMap((p) => p.sections.filter((s) => s.editable?.length).map((s) => ({ p, s })));
+    L.push("## Theme settings (read with admin access)", "");
+    L.push(`- Live theme: ${a.themeName} (\`${a.themeId}\`)`);
+    L.push(`- Changeable texts, images and links in theme settings: ${a.editableSlotCount}`);
+    L.push(`- Templates: ${a.templates.map((t) => `\`${t}\``).join(", ") || "(none)"}`);
+    if (editableSections.length) {
+      L.push("- Sections with changeable settings (details in each page file):");
+      const seen = new Set<string>();
+      for (const { p, s } of editableSections) {
+        const key = `${s.groupFile}#${s.key}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        L.push(`  - \`${s.key}\` in \`${s.groupFile}\` (${s.label.split(" — ")[0]}, ${pageName(p, id.name)}): ${s.editable!.length} setting(s)`);
+      }
+    } else L.push("- No changeable texts or images were found in theme settings: this theme keeps its content in code.");
+    const imgs = Object.entries(a.hardcodedImages);
+    if (imgs.length) {
+      L.push("- Pictures stored in the theme's own files, and the theme code that uses them:");
+      for (const [img, files] of imgs) L.push(`  - \`${img}\` → ${files.length ? files.map((f) => `\`${f}\``).join(", ") : "(not found in section code)"}`);
+    }
+    L.push("");
+  }
+
   const kinds = [...new Set(snap.pages.map((p) => p.kind))].filter((k) => k !== "home");
   if (kinds.length) {
     L.push("## Page layouts", "", "The sections each kind of page uses (from the first page of that kind):", "");

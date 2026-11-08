@@ -246,6 +246,8 @@ views.overview = async () => {
     <p style="margin-top:14px">Fonts: ${o.design.fonts.map((f) => `<b>${esc(f.family)}</b> <span class="muted">(${esc(f.role)})</span>`).join(", ")}</p>
   </section>` : ""}
 
+  ${o.admin ? adminCard(o) : ""}
+
   <section class="card" style="margin-top:16px">
     <h2>Saved for later — no need to scan again</h2>
     <p>Everything this scan learned is saved on this computer in a <b>store context</b> folder: a written description of every page, every product and a picture of each. Any AI assistant can read it later and carry on from here.</p>
@@ -256,6 +258,36 @@ views.overview = async () => {
   ${o.warnings.length ? `<section class="callout warn" style="margin-top:16px"><b>Notes from the scan</b><ul>${o.warnings.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></section>` : ""}
   `;
 };
+
+function adminCard(o) {
+  const a = o.admin;
+  const homeEditable = (o.home?.sections || []).filter((s) => s.editable?.length);
+  const imgs = Object.entries(a.hardcodedImages || {});
+  return `
+  <section class="card" style="margin-top:16px">
+    <h2>Theme settings <span class="badge ok">admin access connected</span></h2>
+    <p class="muted small">Read from your live theme “${esc(a.themeName)}” (read-only).</p>
+    <div class="tiles" style="margin:12px 0">
+      <div class="tile"><div class="num">${a.editableSlotCount}</div><div class="lbl">Texts, images & links you can change in the theme editor</div></div>
+      <div class="tile"><div class="num">${homeEditable.length}</div><div class="lbl">Homepage sections with changeable settings</div></div>
+      <div class="tile"><div class="num">${a.templates.length}</div><div class="lbl">Page templates</div></div>
+      <div class="tile"><div class="num">${imgs.length}</div><div class="lbl">Homepage pictures built into theme files</div></div>
+    </div>
+    ${a.editableSlotCount === 0 ? `<p class="callout warn">No changeable texts or images were found in your theme's settings. Custom-made themes sometimes keep their content inside the theme code instead. That's useful to know before planning changes.</p>` : ""}
+    ${imgs.length ? `<details><summary>Which theme files use the built-in pictures</summary>
+      <div class="table-wrap"><table><thead><tr><th>Picture</th><th>Used in</th></tr></thead><tbody>
+      ${imgs.map(([img, files]) => `<tr><td><code>${esc(img)}</code></td><td>${files.length ? files.map((f) => `<code>${esc(f)}</code>`).join(" ") : '<span class="muted">not found in section code (may be set in theme settings)</span>'}</td></tr>`).join("")}
+      </tbody></table></div></details>` : ""}
+  </section>`;
+}
+
+function editableList(s) {
+  if (!s.editable?.length) return "";
+  return `<details><summary>What can be changed in the theme editor (${s.editable.length})</summary>
+    <div class="table-wrap"><table><thead><tr><th>Setting</th><th>Type</th><th>Current value</th></tr></thead><tbody>
+    ${s.editable.map((e) => `<tr><td><code>${esc(e.setting)}</code>${e.blockId ? `<br><span class="muted small">block ${esc(e.blockId)}</span>` : ""}</td><td>${esc(e.kind)}</td><td style="overflow-wrap:anywhere">${esc(String(e.value).slice(0, 200)) || '<span class="muted">(empty)</span>'}</td></tr>`).join("")}
+    </tbody></table></div></details>`;
+}
 
 function sourceSummary(images) {
   const by = {};
@@ -288,7 +320,7 @@ views.homepage = async () => {
         ${s.headings.length ? `<p><b>Headings:</b> ${s.headings.slice(0, 6).map(esc).join(" · ")}</p>` : s.texts.length ? `<p><b>Says:</b> ${s.texts.slice(0, 4).map(esc).join(" · ")}</p>` : ""}
         ${s.buttons.length ? `<p><b>Buttons:</b> ${s.buttons.slice(0, 6).map((b) => `<span class="badge">${esc(b.text)}</span>`).join(" ")}</p>` : ""}
         ${s.images.length ? `<p><b>Pictures:</b> ${esc(sourceSummary(s.images))}</p>` : ""}
-        ${s.editable?.length ? `<p><span class="badge ok">${plural(s.editable.length, "editable setting")}</span></p>` : ""}
+        ${editableList(s)}
         <details><summary>Show every word (${plural(s.words, "word")})</summary><div class="wording">${esc(s.content || "(no text)")}</div></details>
         <p class="muted small" style="margin-top:6px">Shopify name: <code>${esc(s.key)}</code>${s.groupFile ? ` in <code>${esc(s.groupFile)}</code>` : ""}</p>
       </div>
@@ -346,6 +378,7 @@ views.page = async (index) => {
         <div class="num muted small"><b>PART ${i + 1}</b>${s.group !== "template" && p.kind !== "home" ? " · same on every page" : ""}</div>
         <h3>${esc(s.label)}</h3>
         ${s.images.length ? `<p class="small muted">Pictures: ${esc(sourceSummary(s.images))}</p>` : ""}
+        ${editableList(s)}
         ${s.group !== "template" && p.kind !== "home" ? "" : `<details ${p.sections.length < 6 ? "open" : ""}><summary>Every word</summary><div class="wording">${esc(s.content || "(no text)")}</div></details>`}
       </section>`).join("")}
     </div>
